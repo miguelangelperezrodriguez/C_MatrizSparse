@@ -1,7 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define FILCOLS 10
+#define NROACCESOS_RAPIDOS 10
+
+#define TAM_BUFFER 200
 
 struct acceso_rapido
 {
@@ -11,23 +15,49 @@ struct acceso_rapido
     float datos_col [FILCOLS];
 };
 
-float datos_sparse [FILCOLS*FILCOLS] = {0.0F};
+//
+struct acceso_rapido_grupo
+{
+    struct acceso_rapido accesos[NROACCESOS_RAPIDOS];
+    int con_columna [NROACCESOS_RAPIDOS];
+    // AL GUARDAR EL ACCESO RAPIDO SE LE DA UN VALOR
+    // DE ACCESOS_INICIALES_PARA_ACCESO_RAPIDO  3
+    int nro_accesos[NROACCESOS_RAPIDOS];
+} tgestoraccesos;
 
+float datos_sparse [FILCOLS*FILCOLS] = {0.0F};
+int cargar_datos_sparse (char *nombre_fichero, float datos[]);
+
+// USO DE LA MATRIZ
 float dato_accedido (long f,long c);
 // Devuelve anterior valor.
 float almacenar_dato (long f,long c,float valor);
 
-struct acceso_rapido acceso_1;
-
+// ACCESOS RAPIDOS.
 // CARGA EL acc CON LA FILA f Y LA COLUMNA c
 void limpiar_acceso (struct acceso_rapido *acceso);
 void cargar_acceso_rapido (struct acceso_rapido *acc,long f,long c);
 void cargar_acceso_rapido_fila (struct acceso_rapido *acc,long f);
 
-int main()
+// ACCESOS RAPIDOS GUARDADOS.
+void limpiar_acceso_mem (struct acceso_rapido *acceso);
+void cargar_acceso_rapido_mem (struct acceso_rapido *acc,long f,long c);
+void cargar_acceso_rapido_fila (struct acceso_rapido *acc,long f);
+
+struct acceso_rapido acceso_1;
+
+int main(int argc,char *argv[])
 {
+
+    // PARTE SIN FICHEROS.
+
     float anterior;
     struct acceso_rapido acceder1;
+
+    // VARIABLES PARA FICHEROS
+    char *n_fichero = {"\0"};
+
+    // CODIGO SIN FICHEROS
 
     almacenar_dato(4,2,10.0);
     printf ("%f\n",dato_accedido(4,2));
@@ -44,8 +74,59 @@ int main()
         printf ("DATO FILA %d ? : %f\n",i,acceder1.datos_fila[i]);
         printf ("DATO COLS %d ? : %f\n",i,acceder1.datos_col[i]);
     }
+
+    // PARTE CON FICHEROS.
+    if (argc==2)
+    {
+        n_fichero = argv[1];
+        printf ("%s cargado.\n",n_fichero);
+        cargar_datos_sparse(n_fichero, datos_sparse);
+        // Ver una lectura
+        printf ("ACCESO : 4.5 = %f\n",dato_accedido(4,5));
+    }
 }
 
+int cargar_datos_sparse (char *nombre_fichero, float datos[])
+{
+    char buffer[TAM_BUFFER];
+    char *ptr_tok;
+    FILE *fichero;
+    long nro_datos = 0;
+    long f_aux = 1;
+    long c_aux = 1;
+
+    fichero = fopen (nombre_fichero,"r");
+    if (fichero==NULL) {
+        fputs ("Error al abrir el fichero.\n",stderr);
+        exit (1);
+    }
+
+    while (fgets(buffer,TAM_BUFFER,fichero) != NULL)
+    {
+        if ((ptr_tok = strtok (buffer,"; \n")) != NULL)
+        {
+            almacenar_dato(f_aux,c_aux,atof(ptr_tok));
+            c_aux++;
+            nro_datos++;
+            while (ptr_tok != NULL)
+            {
+                ptr_tok = strtok (NULL, "; \n");
+                if (ptr_tok != NULL)
+                {
+                    almacenar_dato(f_aux,c_aux,atof(ptr_tok));
+                    c_aux++;
+                    nro_datos++;
+                }
+            }
+        }
+        c_aux = 1;
+        f_aux++;
+    }
+    printf ("OK transferidos. %ld datos.\n",nro_datos);
+    return 0;
+}
+
+// FUNCIONES SIMPLES PARA ACCEDER Y MODIFICAR LOS DATOS.
 float dato_accedido (long f,long c)
 {
    return datos_sparse [(f-1)*FILCOLS+(c-1)];
