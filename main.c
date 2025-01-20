@@ -3,7 +3,6 @@
 #include <string.h>
 
 #define FILCOLS 10
-#define NROACCESOS_RAPIDOS 10
 
 #define TAM_BUFFER 200
 
@@ -14,16 +13,6 @@ struct acceso_rapido
     float datos_fila [FILCOLS];
     float datos_col [FILCOLS];
 };
-
-//
-struct acceso_rapido_grupo
-{
-    struct acceso_rapido accesos[NROACCESOS_RAPIDOS];
-    int con_columna [NROACCESOS_RAPIDOS];
-    // AL GUARDAR EL ACCESO RAPIDO SE LE DA UN VALOR
-    // DE ACCESOS_INICIALES_PARA_ACCESO_RAPIDO  3
-    int nro_accesos[NROACCESOS_RAPIDOS];
-} tgestoraccesos;
 
 float datos_sparse [FILCOLS*FILCOLS] = {0.0F};
 int cargar_datos_sparse (char *nombre_fichero, float datos[]);
@@ -38,13 +27,13 @@ float almacenar_dato (long f,long c,float valor,float sparse[]);
 void limpiar_acceso (struct acceso_rapido *acceso);
 void cargar_acceso_rapido (struct acceso_rapido *acc,long f,long c,float sparse[]);
 void cargar_acceso_rapido_fila (struct acceso_rapido *acc,long f,float sparse[]);
+void pantalla_acceso_rapido (struct acceso_rapido *acc);
 
 // ACCESOS RAPIDOS GUARDADOS.
 //void limpiar_acceso_mem (struct acceso_rapido *acceso);
 //void cargar_acceso_rapido_mem (struct acceso_rapido *acc,long f,long c);
 //void cargar_acceso_rapido_fila (struct acceso_rapido *acc,long f);
 
-struct acceso_rapido acceso_1;
 
 int main(int argc,char *argv[])
 {
@@ -53,6 +42,7 @@ int main(int argc,char *argv[])
 
     float anterior;
     struct acceso_rapido acceder1;
+    struct acceso_rapido acceso_fich;
 
     // VARIABLES PARA FICHEROS
     char *n_fichero = {"\0"};
@@ -68,11 +58,7 @@ int main(int argc,char *argv[])
     // Uso de taccessos
     limpiar_acceso(&acceder1);
     cargar_acceso_rapido_fila(&acceder1,4,datos_sparse);
-    for (int i=0;i<FILCOLS;i++)
-    {
-        printf ("DATO FILA %d ? : %f\n",i,acceder1.datos_fila[i]);
-        printf ("DATO COLS %d ? : %f\n",i,acceder1.datos_col[i]);
-    }
+    pantalla_acceso_rapido(&acceder1);
 
     // PARTE CON FICHEROS.
     if (argc==2)
@@ -82,6 +68,12 @@ int main(int argc,char *argv[])
         cargar_datos_sparse(n_fichero, datos_sparse);
         // Ver una lectura
         printf ("ACCESO : 2.2 = %f\n",dato_accedido(2,2,datos_sparse));
+
+        limpiar_acceso(&acceso_fich);
+        cargar_acceso_rapido_fila(&acceso_fich,3,datos_sparse);
+
+        pantalla_acceso_rapido(&acceso_fich);
+
     }
 }
 
@@ -181,5 +173,14 @@ void limpiar_acceso (struct acceso_rapido *acceso)
     {
         acceso->datos_col[i] = 0.0F;
         acceso->datos_fila[i] = 0.0F;
+    }
+}
+
+void pantalla_acceso_rapido (struct acceso_rapido *acc)
+{
+    for (int i=0;i<FILCOLS;i++)
+    {
+        printf ("DATO FILA %d ? : %f\n",i,acc->datos_fila[i]);
+        printf ("DATO COLS %d ? : %f\n",i,acc->datos_col[i]);
     }
 }
